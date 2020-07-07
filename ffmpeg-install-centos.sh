@@ -7,19 +7,14 @@
 function banner {
 
 	echo -en "
-
 +++++++++++++++++++++++++++++++++++++++++
 +    FFmpeg Installer for CentOS        +
 +++++++++++++++++++++++++++++++++++++++++
-
 Please note that this is for Centos 
 Choose an option below: 
-
     1. Install FFmpeg
-    2. Update FFmpeg
-    3. Uninstall FFmpeg
-    4. Exit and do nothing
-
+    2. Uninstall FFmpeg
+    3. Exit and do nothing
     Your Choice : "
 
 
@@ -29,193 +24,125 @@ Choose an option below:
 function install {
 
 	echo "Installing dependencies..!"
-	 yum install autoconf automake cmake freetype-devel gcc gcc-c++ git libtool make mercurial nasm pkgconfig zlib-devel -y
 
-	 mkdir ~/ffmpeg_sources
+    # install required dependencies
+    yum -y install autoconf automake bzip2 bzip2-devel cmake freetype-devel gcc gcc-c++ git libtool make mercurial pkgconfig zlib-devel
 
-	 #Yasm
-	 echo "Installing YASM.."
-	 cd ~/ffmpeg_sources
-	 git clone --depth 1 git://github.com/yasm/yasm.git
-	 cd yasm
-	 autoreconf -fiv
-	 ./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin"
-	 make
-	 make install
-	 make distclean
+    # create base directory
+    mkdir ~/ffmpeg_sources
 
-	 #libx264
-	 echo "Installing libx264..."
-	 cd ~/ffmpeg_sources
-	 git clone --depth 1 git://git.videolan.org/x264
-	 cd x264
-	 PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin" --enable-static
-	 make
-	 make install
-	 make distclean
+    # Nasm
+    echo "Installing Nasm..."
+    cd ~/ffmpeg_sources
+    curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2
+    tar xjvf nasm-2.14.02.tar.bz2
+    cd nasm-2.14.02
+    ./autogen.sh
+    ./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin"
+    make
+    make install
 
-	# libx265
-	echo "Installing libx265.."
-	cd ~/ffmpeg_sources
-	hg clone https://bitbucket.org/multicoreware/x265
-	cd ~/ffmpeg_sources/x265/build/linux
-	cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" -DENABLE_SHARED:bool=off ../../source
-	make
-	make install
+    # Yasm
+    echo "Installing Yasm..."
+    cd ~/ffmpeg_sources
+    curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
+    tar xzvf yasm-1.3.0.tar.gz
+    cd yasm-1.3.0
+    ./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin"
+    make
+    make install
 
-	# libfdk_aac
-	# AAC audio encoder.
-	echo "Installing libfdk_aac Audio encoder.."
-	cd ~/ffmpeg_sources
-	git clone --depth 1 git://git.code.sf.net/p/opencore-amr/fdk-aac
-	cd fdk-aac
-	autoreconf -fiv
-	./configure --prefix="$HOME/ffmpeg_build" --disable-shared
-	make
-	make install
-	make distclean
+    # x264
+    echo "Installing x264..."
+    cd ~/ffmpeg_sources
+    git clone --depth 1 https://code.videolan.org/videolan/x264.git
+    cd x264
+    PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin" --enable-static
+    make
+    make install
 
-	# libmp3lame
-	# MP3 audio encoder.
-	echo "Installing libmp3lame MP3 encoder.."
-	cd ~/ffmpeg_sources
-	curl -L -O http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz
-	tar xzvf lame-3.99.5.tar.gz
-	cd lame-3.99.5
-	./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin" --disable-shared --enable-nasm
-	make
-	make install
-	make distclean
+    # x265
+    echo "Installing x265..."
+    cd ~/ffmpeg_sources
+    hg clone https://bitbucket.org/multicoreware/x265
+    cd ~/ffmpeg_sources/x265/build/linux
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" -DENABLE_SHARED:bool=off ../../source
+    make
+    make install
 
-	# libopus
-	echo "Installing libopus.."
-	cd ~/ffmpeg_sources
-	git clone git://git.opus-codec.org/opus.git
-	cd opus
-	autoreconf -fiv
-	./configure --prefix="$HOME/ffmpeg_build" --disable-shared
-	make
-	make install
-	make distclean
+    # libfdk_aac
+    echo "Installing libfdk_aac..."
+    cd ~/ffmpeg_sources
+    git clone --depth 1 https://github.com/mstorsjo/fdk-aac
+    cd fdk-aac
+    autoreconf -fiv
+    ./configure --prefix="$HOME/ffmpeg_build" --disable-shared
+    make
+    make install
 
-	# libogg
-	# Ogg bitstream library
-	echo "Installing Ogg bitstream library.."
-	cd ~/ffmpeg_sources
-	curl -O http://downloads.xiph.org/releases/ogg/libogg-1.3.2.tar.gz
-	tar xzvf libogg-1.3.2.tar.gz
-	cd libogg-1.3.2
-	./configure --prefix="$HOME/ffmpeg_build" --disable-shared
-	make
-	make install
-	make distclean
+    # libmp3lame
+    echo "Installing libmp3lame..."
+    cd ~/ffmpeg_sources
+    curl -O -L https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz
+    tar xzvf lame-3.100.tar.gz
+    cd lame-3.100
+    ./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin" --disable-shared --enable-nasm
+    make
+    make install
 
-	# libvorbis 
-	# Vorbis audio encoder
-	echo "Installing vorbis audio encoder.."
-	cd ~/ffmpeg_sources
-	curl -O http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.4.tar.gz
-	tar xzvf libvorbis-1.3.4.tar.gz
-	cd libvorbis-1.3.4
-	LDFLAGS="-L$HOME/ffmeg_build/lib" CPPFLAGS="-I$HOME/ffmpeg_build/include" ./configure --prefix="$HOME/ffmpeg_build" --with-ogg="$HOME/ffmpeg_build" --disable-shared
-	make
-	make install
-	make distclean#mtestxo
+    # libopus
+    echo "Installing libopus..."
+    cd ~/ffmpeg_sources
+    curl -O -L https://archive.mozilla.org/pub/opus/opus-1.3.1.tar.gz
+    tar xzvf opus-1.3.1.tar.gz
+    cd opus-1.3.1
+    ./configure --prefix="$HOME/ffmpeg_build" --disable-shared
+    make
+    make install
 
-	# libvpx 
-	# VP8/VP9 video encoder.
-	echo "Installing VP8/VP9 video encoder.."
-	cd ~/ffmpeg_sources
-	git clone --depth 1 https://chromium.googlesource.com/webm/libvpx.git
-	cd libvpx
-	./configure --prefix="$HOME/ffmpeg_build" --disable-examples
-	make
-	make install
-	make clean
+    # libvpx
+    echo "Installing libvpx..."
+    cd ~/ffmpeg_sources
+    git clone --depth 1 https://chromium.googlesource.com/webm/libvpx.git
+    cd libvpx
+    ./configure --prefix="$HOME/ffmpeg_build" --disable-examples --disable-unit-tests --enable-vp9-highbitdepth --as=yasm
+    make
+    make install
 
-	# FFmpeg
-	echo "Finally, installing FFmpeg.."
-	cd ~/ffmpeg_sources
-	git clone http://source.ffmpeg.org/git/ffmpeg.git
-	cd ffmpeg
-	PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure --prefix="$HOME/ffmpeg_build" --extra-cflags="-I$HOME/ffmpeg_build/include" --extra-ldflags="-L$HOME/ffmpeg_build/lib" --bindir="$HOME/bin" --pkg-config-flags="--static" --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libfreetype --enable-libmp3lame --enable-libopus --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libx265
-	make
-	make install
-	make distclean
-	hash -r
-}
-
-function update {
-
-	echo "Updating FFmpeg..!!"
-	rm -rf ~/ffmpeg_build ~/bin/{ffmpeg,ffprobe,ffserver,lame,vsyasm,x264,x265,yasm,ytasm}
-	yum install autoconf automake cmake gcc gcc-c++ git libtool make mercurial nasm pkgconfig zlib-devel -y
-
-	# Update Yasm 
-	echo "Updating YASM..!"
-	cd ~/ffmpeg_sources/yasm
-	make distclean
-	git pull
-	./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin"
-	make
-	make install
-
-
-	# Update x264
-	echo "Updating x264.."
-	cd ~/ffmpeg_sources/x264
-	make distclean
-	git pull
-	PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin" --enable-static
-	make
-	make install
-
-
-	# Update x265
-	echo "Updating x265.."
-	cd ~/ffmpeg_sources/x265
-	rm -rf ~/ffmpeg_sources/x265/build/linux/*
-	hg update
-	cd ~/ffmpeg_sources/x265/build/linux
-	cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" -DENABLE_SHARED:bool=off ../../source
-	make
-	make install
-
-	# Update libfdk_aac
-	echo "Updating libfdk_aac.."
-	cd ~/ffmpeg_sources/fdk_aac
-	make distclean
-	git pull
-	./configure --prefix="$HOME/ffmpeg_build" --disable-shared
-	make
-	make install
-
-	# Update libvpx
-	echo "Updating libvpx..!"
-	cd ~/ffmpeg_sources/libvpx
-	make clean
-	git pull
-	./configure --prefix="$HOME/ffmpeg_build" --disable-examples
-	make
-	make install
-
-	# Update FFmpeg
-	echo "Finally, updating FFmpeg..!!"
-	cd ~/ffmpeg_sources/ffmpeg
-	make distclean
-	git pull
-
-	PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure --prefix="$HOME/ffmpeg_build" --extra-cflags="-I$HOME/ffmpeg_build/include" --extra-ldflags="-L$HOME/ffmpeg_build/lib" --bindir="$HOME/bin" --pkg-config-flags="--static" --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libfreetype --enable-libmp3lame --enable-libopus --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libx265
-	make
-	make install
+    # ffmpeg
+    echo "Installing ffmpeg..."
+    cd ~/ffmpeg_sources
+    curl -O -L https://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2
+    tar xjvf ffmpeg-snapshot.tar.bz2
+    cd ffmpeg
+    PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure \
+    --prefix="$HOME/ffmpeg_build" \
+    --pkg-config-flags="--static" \
+    --extra-cflags="-I$HOME/ffmpeg_build/include" \
+    --extra-ldflags="-L$HOME/ffmpeg_build/lib" \
+    --extra-libs=-lpthread \
+    --extra-libs=-lm \
+    --bindir="$HOME/bin" \
+    --enable-gpl \
+    --enable-libfdk_aac \
+    --enable-libfreetype \
+    --enable-libmp3lame \
+    --enable-libopus \
+    --enable-libvpx \
+    --enable-libx264 \
+    --enable-libx265 \
+    --enable-nonfree
+    make
+    make install
+    hash -d ffmpeg
 
 }
 
 function uninstall {
-	echo "Removing FFmpeg..!!"
-	rm -rf ~/ffmpeg_build ~/ffmpeg_sources ~/bin/{ffmpeg,ffprobe,ffserver,lame,vsyasm,x264,yasm,ytasm}
-	yum erase autoconf automake cmake gcc gcc-c++ git libtool mercurial nasm pkgconfig zlib-devel
-	hash -r
+    echo "Removing FFmpeg..!!"
+    rm -rf ~/ffmpeg_build ~/ffmpeg_sources ~/bin/{ffmpeg,ffprobe,lame,nasm,vsyasm,x264,yasm,ytasm}
+    yum erase autoconf automake bzip2 bzip2-devel cmake freetype-devel gcc gcc-c++ git libtool mercurial zlib-devel
+    hash -r
 }
 
 function main {
@@ -230,20 +157,13 @@ function main {
 		install
 
 	elif [[ $choice -eq 2 ]]; then
-
-		echo "Are you sure you want to update FFmpeg?"
-		echo "Press Enter to continue. Ctrl+C to exit"
-		read
-		update
-
-	elif [[ $choice -eq 3 ]]; then
 		
 		echo "Are you sure you want to remove FFmpeg?"
 		echo "Press Enter to continue. Ctrl+C to exit"
 		read
 		uninstall
 
-	elif [[ $choice -eq 4 ]]; then
+	elif [[ $choice -eq 3 ]]; then
 
 		echo "Chose to exit..!"
 		exit
